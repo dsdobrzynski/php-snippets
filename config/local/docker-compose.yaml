@@ -1,0 +1,132 @@
+version: '3'
+services:
+    web:
+        external_links:
+            - cvalidation_similarity_local_web:cvalidationsimilarity
+            - gameplan_web_1:gravada
+            - adbuilder_xdebug_web:adbuilder
+            - prospector_xdebug_web:prospector
+        environment:
+            - TERM=xterm
+            - PHP_IDE_CONFIG=serverName=localhost
+            - XDEBUG_REMOTE_PORT=9001
+            - AWS_ACCESS_KEY_ID=[[[FILL]]]
+            - AWS_SECRET_ACCESS_KEY=[[[FILL]]]
+            - CALENDLY_CLIENT_ID=[[[FILL]]]
+            - CALENDLY_CLIENT_SECRET=[[[FILL]]]
+            - 'COMPOSER_AUTH={ "github-oauth": { "github.com": "[[[FILL]]]" } }'
+            - DATABASE_URL=[[[FILL]]]
+            - DATABASE_USER=[[[FILL]]]
+            - DATABASE_PASSWORD=[[[FILL]]]
+            - EBUILDER_NOTIFICATIONS_ADVERTISERS=[[[FILL]]]
+            - FACEBOOK_ACCESS_TOKEN=[[[FILL]]]
+            - FACEBOOK_AD_ACCOUNT_AW_ID=[[[FILL]]]
+            - FACEBOOK_AD_ACCOUNT_HCP_ID=[[[FILL]]]
+            - FACEBOOK_AD_ACCOUNT_OEM_ID=[[[FILL]]]
+            - FACEBOOK_AD_ACCOUNT_PFW_ID=[[[FILL]]]
+            - FACEBOOK_AD_ACCOUNT_PW_ID=[[[FILL]]]
+            - FACEBOOK_AD_ACCOUNT_PMG_ID=[[[FILL]]]
+            - FACEBOOK_APP_ID=[[[FILL]]]
+            - FACEBOOK_APP_SECRET=[[[FILL]]]
+            - FACEBOOK_NOTIFICATION_EMAILS=[[[FILL]]]
+            - GIT_MCHEADER=[[[FILL]]]
+            - JIRA_USER_EMAIL=[[FILL]]
+            - JIRA_USER_ACCESS_TOKEN=[[FILL]]
+            - NAVIGA_LOG_STREAM='naviga-development'
+            - LEADWORKS_URL=[[[FILL]]]
+            - MYS_API_USER=[[[FILL]]]
+            - MYS_API_PASSWORD=[[[FILL]]]
+            - MYS_API_SHOWCODE=[[[FILL]]]
+            - NAVIGA_AUTH_TOKEN=[[[FILL]]]
+            - OMEDA_BASE_URL=[[[FILL]]]
+            - OMEDA_APP_ID=[[[FILL]]]
+            - OMEDA_INPUT_ID=[[[FILL]]]
+            - SALESFORCE_BASE_URL=[[[FILL]]]
+            - SALESFORCE_CLIENT_ID=[[[FILL]]]
+            - SALESFORCE_CLIENT_SECRET=[[[FILL]]]
+            - SALESFORCE_LOGIN_URL=[[[FILL]]]
+            - SALESFORCE_PASSWORD=[[[FILL]]]
+            - SALESFORCE_USERNAME=[[[FILL]]]
+            - SENDGRID_API_KEY=[[[FILL]]]
+            - SEND_EMAILS=false
+            - SMARTY_AUTH_ID=[[[FILL]]]
+            - SMARTY_AUTH_TOKEN=[[[FILL]]]
+            - SMARTY_DO_MATCH=true
+            - SMARTY_PASSWORD=[[[FILL]]]
+            - WEBFLOW_API_KEY=[[[FILL]]]
+            - WEBFLOW_BASE_URL=https://api.webflow.com
+            - WEBFLOW_SMA_AD_COLLECTION_ID=[[[FILL]]]
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                - WITH_XDEBUG=true
+        container_name: lw_web
+        ports:
+            - "8085:80"
+        volumes:
+            - ./config/apache2/default:/etc/apache2/sites-available
+            - ./config/apache2/conf/apache2.conf:/etc/apache2/conf-enabled/apache2.conf
+            - ./config/app/runtime:/var/www/html/leadworks/protected/runtime
+            - ./config/server/yii:/etc/bash_completion.d/yii
+            - ./src:/var/www/html
+        depends_on:
+            - db
+            - mongoz
+    db:
+        image: postgres:11.13
+        ports:
+            - "5433:5432"
+        container_name: lw_db
+        user: postgres
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+            - ./build/ref:/var/lib/postgresql/ref
+        environment:
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: leadworks_prod
+    testdb:
+        image: postgres:11.13
+        container_name: lw_db_test
+        ports:
+            - "5434:5432"
+        volumes:
+            - postgres_test_data:/var/lib/postgresql/data
+        user: postgres
+        environment:
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: leadworks
+    mongoz:
+        image: mongo:latest
+        ports:
+            - "27072:27017"
+        container_name: lw_mongo
+        volumes:
+            - mongo_data:/data/db
+    redis:
+        image: redis:latest
+        volumes:
+            - redis_data:/data
+            - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+        container_name: lw_redis
+volumes:
+    postgres_data:
+    postgres_test_data:
+    mongo_data:
+    redis_data:
+networks:
+    prospector-switch_default:
+        external:
+            name: prospector-switch_default
+    prospector_front:
+        external:
+            name: prospector_front
+    cvalidation_default:
+        external:
+            name: cvalidation_default
+    gameplan_front:
+        external:
+            name: gameplan_front
+    ad_builder_default:
+        external:
+            name: ad_builder_default
